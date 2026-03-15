@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello Minikube</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 80px auto; text-align: center; }
+        #response { margin-top: 1em; color: #333; }
+        button { padding: 8px 16px; font-size: 1rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Hello from Nginx</h1>
+    <p>This static page is served by Nginx.</p>
+    <button onclick="callBackend()">Call FastAPI Backend</button>
+    <p id="response"></p>
+    <script>
+        async function callBackend() {
+            try {
+                const res = await fetch("/api/hello");
+                const data = await res.json();
+                document.getElementById("response").textContent = data.message;
+            } catch (err) {
+                document.getElementById("response").textContent = "Error: " + err;
+            }
+        }
+    </script>
+</body>
+</html>
