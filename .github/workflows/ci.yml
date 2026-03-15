@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start minikube
+        uses: medyagh/setup-minikube@latest
+
+      - name: Build images
+        run: |
+          eval $(minikube docker-env)
+          docker build -t backend:latest  backend/
+          docker build -t frontend:latest frontend/
+
+      - name: Deploy to minikube
+        run: kubectl apply -f k8s/
+
+      - name: Wait for pods
+        run: |
+          kubectl wait --for=condition=ready pod -l app=backend --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=frontend --timeout=120s
+
+      - name: Test FastAPI responds
+        run: |
+          # Port-forward backend in the background
+          kubectl port-forward svc/backend 8000:8000 &
+          PF_PID=$!
+
+          # Wait for port-forward to be ready
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:8000/api/hello >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+          # Verify the response
+          RESPONSE=$(curl -sf http://localhost:8000/api/hello)
+          echo "Response: $RESPONSE"
+          echo "$RESPONSE" | grep -q '"message"' || { echo "Unexpected response"; exit 1; }
+
+          kill $PF_PID
+
+      - name: Show debug info on failure
+        if: failure()
+        run: |
+          echo "=== Pod status ==="
+          kubectl get pods
+          echo "=== Backend logs ==="
+          kubectl logs -l app=backend --tail=50 || true
+          echo "=== Frontend logs ==="
+          kubectl logs -l app=frontend --tail=50 || true
+          echo "=== Events ==="
+          kubectl get events --sort-by='.lastTimestamp' | tail -20 || true
