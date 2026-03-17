@@ -138,6 +138,7 @@ az containerapp create \
   --registry-identity system \
   --target-port 8000 \
   --ingress internal \
+  --transport http \
   --min-replicas 1 \
   --max-replicas 3
 ```
