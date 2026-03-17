@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello Minikube</title>
+    <title>Hello, Cloud</title>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 80px auto; text-align: center; }
         #response { margin-top: 1em; color: #333; }
@@ -14,10 +14,13 @@
     <h1>Hello, Cloud</h1>
     <p>
         This is my exercise in deploying an app to Cloud Platforms.
+    </p>
+    <p>
         The repository is on <a href="https://github.com/ChaoticRoman/getting-started-minikube/">GitHub</a>.
     </p>
     <button onclick="callBackend()">Call FastAPI Backend</button>
     <p id="response"></p>
+    <p id="version" style="margin-top: 2em; font-size: 0.8rem; color: #999;"></p>
     <script>
         async function callBackend() {
             try {
@@ -28,6 +31,9 @@
                 document.getElementById("response").textContent = "Error: " + err;
             }
         }
+        fetch("version.txt", { cache: "no-store" })
+            .then(r => r.text())
+            .then(v => document.getElementById("version").textContent = "Commit: " + v.trim());
     </script>
 </body>
 </html>
