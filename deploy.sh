@@ -6,7 +6,7 @@ eval $(minikube docker-env)
 
 # Build images
 docker build -t backend:latest  backend/
-docker build -t frontend:latest frontend/
+docker build --build-arg COMMIT_SHA=$(git rev-parse HEAD) -t frontend:latest frontend/
 
 # Apply manifests
 kubectl apply -f k8s/
