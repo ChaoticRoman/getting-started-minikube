@@ -157,9 +157,10 @@ az containerapp create \
   --registry-identity system \
   --target-port 80 \
   --ingress external \
+  --transport http \
   --min-replicas 1 \
   --max-replicas 3 \
-  --env-vars BACKEND_URL=http://backend
+  --env-vars "BACKEND_URL=http://backend"
 ```
 
 #### 7. Custom domain (test domain: azure.romanpavelka.cz)
