@@ -32,18 +32,15 @@
                 document.getElementById("response").textContent = "Error: " + err;
             }
         }
-        fetch("/.auth/me")
+        fetch("/api/me")
             .then(r => r.ok ? r.json() : null)
             .then(data => {
-                if (!data || data.length === 0) {
+                if (!data || !data.user) {
                     window.location.href = "/login.html";
                     return;
                 }
-                const principal = data[0];
-                const name = principal.user_claims?.find(c => c.typ === "name")?.val
-                    || principal.user_id;
                 document.getElementById("user-info").innerHTML =
-                    "Signed in as " + name + ' · <a href="/.auth/logout">Sign out</a>';
+                    "Signed in as " + data.user + ' · <a href="/.auth/logout">Sign out</a>';
             })
             .catch(() => { window.location.href = "/login.html"; });
         fetch("version.txt", { cache: "no-store" })

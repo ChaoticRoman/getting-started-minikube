@@ -287,8 +287,7 @@ by the deploy workflow and the OIDC federated credential.
 ### Authentication (Azure Easy Auth)
 
 The frontend uses [Azure Container Apps built-in authentication](https://learn.microsoft.com/en-us/azure/container-apps/authentication)
-(Easy Auth) to require sign-in via Microsoft or Google accounts. No application code changes are needed — authentication is handled
-at the platform level before requests reach the container.
+(Easy Auth) to require sign-in via Microsoft or Google accounts.
 
 #### 1. Register a Microsoft identity provider
 
