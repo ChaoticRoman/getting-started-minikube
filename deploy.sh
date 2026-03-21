@@ -11,6 +11,9 @@ docker build --build-arg COMMIT_SHA=$(git rev-parse HEAD) -t frontend:latest fro
 # Apply manifests
 kubectl apply -f k8s/
 
+# Force pods to pick up the newly built images (tag is always :latest)
+kubectl rollout restart deployment/frontend deployment/backend
+
 echo ""
 echo "Waiting for pods to be ready..."
 kubectl wait --for=condition=ready pod -l app=backend --timeout=60s
