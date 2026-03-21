@@ -12,6 +12,7 @@
 </head>
 <body>
     <h1>Hello, Cloud</h1>
+    <p id="user-info"></p>
     <p>
         This is my exercise in deploying an app to Cloud Platforms.
     </p>
@@ -31,6 +32,20 @@
                 document.getElementById("response").textContent = "Error: " + err;
             }
         }
+        fetch("/.auth/me")
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data || data.length === 0) {
+                    window.location.href = "/login.html";
+                    return;
+                }
+                const principal = data[0];
+                const name = principal.user_claims?.find(c => c.typ === "name")?.val
+                    || principal.user_id;
+                document.getElementById("user-info").innerHTML =
+                    "Signed in as " + name + ' · <a href="/.auth/logout">Sign out</a>';
+            })
+            .catch(() => { window.location.href = "/login.html"; });
         fetch("version.txt", { cache: "no-store" })
             .then(r => r.text())
             .then(v => document.getElementById("version").textContent = "Commit: " + v.trim());

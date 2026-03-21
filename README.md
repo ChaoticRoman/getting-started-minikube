@@ -70,7 +70,9 @@ minikube delete
 
 ## Azure Deployment
 
-The app is deployed to [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview) and exposed at `https://azure.romanpavelka.cz`. Pushes to `main` trigger CI, and on success the deploy workflow updates the running containers.
+The app is deployed to [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview)
+and exposed at `https://azure.romanpavelka.cz`. Pushes to `main` trigger CI, and on success the deploy workflow
+updates the running containers.
 
 ### One-Time Azure Setup
 
@@ -279,4 +281,105 @@ Add these as **repository variables**:
 | `ACR_NAME`             | `gettingstartedcr`   |
 | `AZURE_RESOURCE_GROUP` | `rg-getting-started` |
 
-Also create a GitHub **environment** called `production-aca` (Settings > Environments) — this is referenced by the deploy workflow and the OIDC federated credential.
+Also create a GitHub **environment** called `production-aca` (Settings > Environments) — this is referenced
+by the deploy workflow and the OIDC federated credential.
+
+### Authentication (Azure Easy Auth)
+
+The frontend uses [Azure Container Apps built-in authentication](https://learn.microsoft.com/en-us/azure/container-apps/authentication)
+(Easy Auth) to require sign-in via Microsoft or Google accounts. No application code changes are needed — authentication is handled
+at the platform level before requests reach the container.
+
+#### 1. Register a Microsoft identity provider
+
+Create an app registration in Microsoft Entra ID:
+
+```bash
+AUTH_APP_NAME="getting-started-auth"
+
+az ad app create \
+  --display-name $AUTH_APP_NAME \
+  --sign-in-audience AzureADandPersonalMicrosoftAccount \
+  --web-redirect-uris "https://azure.romanpavelka.cz/.auth/login/aad/callback"
+
+AUTH_APP_ID=$(az ad app list --display-name $AUTH_APP_NAME --query '[0].appId' -o tsv)
+```
+
+Create a client secret:
+
+```bash
+AUTH_CLIENT_SECRET=$(az ad app credential reset \
+  --id $AUTH_APP_ID \
+  --display-name "easy-auth" \
+  --query password -o tsv)
+
+echo "Save this secret — you won't be able to see it again: $AUTH_CLIENT_SECRET"
+```
+
+#### 2. Register a Google identity provider
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create a new project (or select an existing one)
+3. Go to **APIs & Services > Credentials > Create Credentials > OAuth client ID**
+4. Set application type to **Web application**
+5. Add authorized redirect URI: `https://azure.romanpavelka.cz/.auth/login/google/callback`
+6. Note the **Client ID** and **Client Secret**
+
+#### 3. Enable authentication on the frontend Container App
+
+```bash
+GOOGLE_CLIENT_ID="<your-google-client-id>"
+GOOGLE_CLIENT_SECRET="<your-google-client-secret>"
+
+az containerapp auth update \
+  --name frontend \
+  --resource-group $RESOURCE_GROUP \
+  --unauthenticated-client-action AllowAnonymous \
+  --enabled true
+```
+
+Add the Microsoft identity provider:
+
+```bash
+az containerapp auth microsoft update \
+  --name frontend \
+  --resource-group $RESOURCE_GROUP \
+  --client-id $AUTH_APP_ID \
+  --client-secret $AUTH_CLIENT_SECRET \
+  --issuer "https://login.microsoftonline.com/common/v2.0" \
+  --yes
+```
+
+Add the Google identity provider:
+
+```bash
+az containerapp auth google update \
+  --name frontend \
+  --resource-group $RESOURCE_GROUP \
+  --client-id $GOOGLE_CLIENT_ID \
+  --client-secret $GOOGLE_CLIENT_SECRET \
+  --yes
+```
+
+#### 4. Restart the frontend to apply secret changes
+
+After updating auth configuration or secrets, the active revision must be restarted:
+
+```bash
+az containerapp revision restart \
+  --name frontend \
+  --resource-group $RESOURCE_GROUP \
+  --revision $(az containerapp revision list \
+    --name frontend \
+    --resource-group $RESOURCE_GROUP \
+    --query '[0].name' -o tsv)
+```
+
+#### 5. Verify
+
+Open `https://azure.romanpavelka.cz` in a private browser window. You should be redirected to sign in
+with a Microsoft account. To sign in with Google instead, navigate directly
+to `https://azure.romanpavelka.cz/.auth/login/google`.
+
+> **Tip:** To inspect the logged-in user's claims, call `https://azure.romanpavelka.cz/.auth/me` — this
+returns the token claims as JSON without any backend changes.

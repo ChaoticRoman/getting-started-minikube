@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in — Hello, Cloud</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 400px;
+            margin: 120px auto;
+            text-align: center;
+            color: #333;
+        }
+        h1 { margin-bottom: 0.25em; }
+        p { color: #666; }
+        .providers {
+            margin-top: 2em;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .providers a {
+            display: block;
+            padding: 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: opacity 0.15s;
+        }
+        .providers a:hover { opacity: 0.85; }
+        .btn-microsoft {
+            background: #2f2f2f;
+            color: #fff;
+        }
+        .btn-google {
+            background: #4285f4;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello, Cloud</h1>
+    <p>Sign in to continue</p>
+    <div class="providers">
+        <a class="btn-microsoft" href="/.auth/login/aad?post_login_redirect_uri=/">Sign in with Microsoft</a>
+        <a class="btn-google" href="/.auth/login/google?post_login_redirect_uri=/">Sign in with Google</a>
+    </div>
+</body>
+</html>
